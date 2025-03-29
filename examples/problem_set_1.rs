@@ -125,6 +125,71 @@ fn single_byte_xor_cipher_for_file() {
     }
 }
 
+
+// ===================================================================================
+
+// Challange 5
+fn encrypt_under_key(key: &str, clear_text: &str) -> String {
+
+    let kb = key.as_bytes();
+
+    let ctb = clear_text.as_bytes();
+
+    let mut res: Vec<u8> = Vec::new();
+
+    let mut i :usize = 0;
+    for x in ctb {
+        if i == 3 {i = 0};
+        let c = kb[i];
+        let r = c ^ x;
+        res.push(r);
+        i += 1;
+    }
+
+    let fin_res = hex::encode(res);
+    
+    let solution = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
+    assert_eq!(fin_res, solution);
+
+    return fin_res;
+}
+
+
+// ===================================================================================
+
+// Challange 6
+fn norm_ham_dist(s1: &str, s2: &str) -> f64 {
+    assert_eq!(s1.len(), s2.len());
+    let sb = s1.as_bytes();
+    let sbi: Vec<String> = sb.iter()
+                .map(|x| format!("{x:08b}"))
+                .collect();
+    let sbi = sbi.join("");
+
+    let tb = s2.as_bytes();
+    let tbi: Vec<String> = tb.iter()
+                .map(|x| format!("{x:08b}"))
+                .collect();
+    let tbi = tbi.join("");
+
+    // println!("{:?}", sbi);
+    // println!("{:?}", tbi);
+
+    let mut hd = 0;
+
+    for (s,t) in sbi.chars().zip(tbi.chars()) {
+        if s != t { hd += 1}
+    }
+    // println!("DITANCE = {:?}", hd);
+    f64::from(hd)/ f64::from(s1.len() as u8)
+}
+
+
+
+
+
+
+
 // ===================================================================================
 
 fn main() {
@@ -144,4 +209,10 @@ fn main() {
     // Challange 4
     println!("Challange 4");
     single_byte_xor_cipher_for_file();
+
+    // Challange 5
+    println!("Challange 5");
+    let message = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+    let sc5 = encrypt_under_key("ICE", message);
+    
 }
