@@ -112,7 +112,7 @@ fn single_byte_xor_cipher_for_file() {
 
     if let Ok(fico) = file_content {
         for line in fico.lines() {
-            let res = single_byte_xor_cipher(line);
+            let res = single_byte_xor_cipher(line.as);
             if let Ok(bs) = res {
                 scores.insert((bs.0, bs.1), bs.2);
                 // println!("{:?}", bs);
@@ -196,19 +196,42 @@ fn main() {
     // Challange 1
     println!("Challange 1");
     convert_hex_to_base64();
+    println!("========================================================================");
 
     // Challange 2
     println!("Challange 2");
     fixed_xor();
+    println!("========================================================================");
 
     // Challange 3
     println!("Challange 3");
-    let sc3 = single_byte_xor_cipher("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
+    let ciphertext_bytes =
+        hex::decode("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+            .unwrap();
+    let sc3 = detect_single_char_xor_cipher(&ciphertext_bytes);
     println!("Soution: {:?}", sc3);
+    println!("========================================================================");
 
     // Challange 4
     println!("Challange 4");
-    single_byte_xor_cipher_for_file();
+    // ciphertexts = [bytes.fromhex(line.strip()) for line in open("S1C04_input.txt")]
+    let best_result = std::fs::read_to_string(
+        "/Users/belane/Projects/Current/cryptochallenge/data/set1chall4.txt",
+    )
+    .expect("Failed to read file")
+    .lines()
+    .filter_map(|line| hex::decode(line.as_bytes()).ok()) // Safely decode
+    .map(|he| detect_single_char_xor_cipher(&he))
+    .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
+    if let Some((best_char, max_score, best_sentence)) = best_result {
+        println!(
+            "Best result:\n  Char: {}\n  Score: {}\n  Sentence: {}",
+            best_char as char, max_score, best_sentence
+        );
+    };
+
+    println!("========================================================================");
 
     // Challange 5
     println!("Challange 5");
