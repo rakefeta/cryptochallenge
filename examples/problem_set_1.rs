@@ -1,4 +1,6 @@
 // :dep hex
+use aes::cipher::{generic_array::GenericArray, BlockDecrypt, KeyInit};
+use aes::Aes128;
 use base64::prelude::*; // Import Base64 encoding utilities
 use hex;
 use itertools::Itertools;
@@ -184,9 +186,7 @@ fn detect_single_char_xor_cipher_from_file(filename: &str) {
 }
 
 // ===================================================================================
-// Challenge 5: Implement repeating-key XOR
-
-/// Implement repeating-key XOR
+/// Challenge 5: Implement repeating-key XOR
 ///
 /// This challenge involves encrypting a plaintext using a repeating-key XOR cipher.
 /// In this method, each byte of the plaintext is XOR'd with a corresponding byte of
@@ -227,9 +227,7 @@ fn repeating_key_xor_cipher(key_bytes: &[u8], clear_text_bytes: &[u8]) -> Vec<u8
 }
 
 // ===================================================================================
-// Challenge 6: Break repeating-key XOR
-
-/// Break repeating-key XOR
+/// Challenge 6: Break repeating-key XOR
 ///
 /// This challenge involves decrypting a Base64-encoded ciphertext that was encrypted
 /// using a repeating-key XOR cipher (also known as a Vigenère cipher).
@@ -364,6 +362,52 @@ fn get_optimal_repeating_key_size(data: &[u8]) -> (usize, f32) {
 
     (ksmin, hdmin)
 }
+
+// ===================================================================================
+/// Challenge 6: AES in ECB mode
+///
+/// # Overview
+/// This function involves decrypting data that has been encrypted with AES-128 in ECB mode.
+///
+/// The encryption key is:
+/// `"YELLOW SUBMARINE"`
+///
+/// The input ciphertext is expected to be a byte slice containing a sequence of 16-byte blocks
+/// (AES block size), encrypted using AES-128 in ECB mode.
+///
+/// # Arguments
+/// * `cipher_bytes` - A slice of bytes representing the AES-128-ECB encrypted ciphertext.
+///
+/// # Returns
+/// A `Vec<u8>` containing the plaintext bytes after decryption.
+///
+/// # Example
+/// ```
+/// let plaintext = decrypt_aes128_ecb(&ciphertext_bytes);
+/// println!("Decrypted text: {:?}", String::from_utf8_lossy(&plaintext));
+/// ```
+///
+/// # Dependencies
+/// Requires the `aes` and `block-modes` crates (or just `aes` for low-level API).
+fn decrypt_aes128_ecb(cipher_bytes: &[u8]) -> Vec<u8> {
+    let mut blocks = cipher_bytes
+        .chunks_exact(16)
+        .map(GenericArray::clone_from_slice)
+        .collect::<Vec<_>>();
+
+    let key = GenericArray::from_slice(b"YELLOW SUBMARINE");
+    let cipher = Aes128::new(&key);
+
+    cipher.decrypt_blocks(&mut blocks);
+
+    let mut flat = Vec::with_capacity(blocks.len() * 16);
+    for block in &blocks {
+        flat.extend_from_slice(block.as_slice());
+    }
+
+    flat
+}
+
 // ===================================================================================
 
 fn main() {
@@ -430,6 +474,26 @@ fn main() {
     let (dec_key, file_content) = decipher_repeating_key_xor(&file_content_in_bytes);
 
     println!("ENCRYPTION KEY:    {:?}", String::from_utf8(dec_key));
+    println!(
+        "FILE CONTENT:\n{}",
+        String::from_utf8(file_content).unwrap()
+    );
+
+    println!("========================================================================");
+
+    // Challange 7
+    println!("Challange 7");
+
+    let file_content_b64 = std::fs::read_to_string(
+        r"/Users/belane/Projects/Current/cryptochallenge/data/set1chall7.txt",
+    )
+    .unwrap();
+
+    let file_content_in_bytes = BASE64_STANDARD
+        .decode(file_content_b64.replace('\n', "").replace('\r', ""))
+        .unwrap();
+
+    let file_content = decrypt_aes128_ecb(&file_content_in_bytes);
     println!(
         "FILE CONTENT:\n{}",
         String::from_utf8(file_content).unwrap()
