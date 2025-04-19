@@ -4,6 +4,7 @@ use aes::Aes128;
 use base64::prelude::*; // Import Base64 encoding utilities
 use hex;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 // ===================================================================================
 // Challenge 1: Convert Hex to Base64
@@ -364,7 +365,7 @@ fn get_optimal_repeating_key_size(data: &[u8]) -> (usize, f32) {
 }
 
 // ===================================================================================
-/// Challenge 6: AES in ECB mode
+/// Challenge 7: AES in ECB mode
 ///
 /// # Overview
 /// This function involves decrypting data that has been encrypted with AES-128 in ECB mode.
@@ -389,23 +390,70 @@ fn get_optimal_repeating_key_size(data: &[u8]) -> (usize, f32) {
 ///
 /// # Dependencies
 /// Requires the `aes` and `block-modes` crates (or just `aes` for low-level API).
-fn decrypt_aes128_ecb(cipher_bytes: &[u8]) -> Vec<u8> {
+fn decrypt_aes128_ecb(key: &[u8], cipher_bytes: &[u8]) -> Vec<u8> {
+    let key_len = key.len();
+    assert_eq!(key_len, 16_usize); // AES128 has a key of a fixed length of 16 bytes
     let mut blocks = cipher_bytes
-        .chunks_exact(16)
+        .chunks_exact(key_len)
         .map(GenericArray::clone_from_slice)
         .collect::<Vec<_>>();
 
-    let key = GenericArray::from_slice(b"YELLOW SUBMARINE");
-    let cipher = Aes128::new(&key);
+    let key = GenericArray::from_slice(key);
+    let cipher = Aes128::new(key);
 
     cipher.decrypt_blocks(&mut blocks);
 
-    let mut flat = Vec::with_capacity(blocks.len() * 16);
+    let mut flat = Vec::with_capacity(blocks.len() * key_len);
     for block in &blocks {
         flat.extend_from_slice(block.as_slice());
     }
 
     flat
+}
+
+// ===================================================================================
+/// Challenge 8: Detect AES in ECB mode
+fn count_duplicate_vecs(chunks: Vec<&[u8]>) -> usize {
+    let mut counts: HashMap<Vec<u8>, usize> = HashMap::new();
+
+    for slice in chunks {
+        let key = slice.to_vec(); // convert &[u8] to Vec<u8>
+        *counts.entry(key).or_insert(0) += 1;
+    }
+
+    // Count total number of duplicate *elements*
+    let total_duplicates: usize = counts.values().filter(|&&c| c > 1).map(|&c| c - 1).sum();
+    total_duplicates
+}
+
+fn challenge8() {
+    let file_content_b64 = std::fs::read_to_string(
+        r"/Users/belane/Projects/Current/cryptochallenge/data/set1chall8.txt",
+    )
+    .unwrap();
+
+    let lines: Vec<Vec<u8>> = file_content_b64
+        .lines()
+        .filter_map(|line| hex::decode(line).ok())
+        .collect();
+
+    let chunked_lines: Vec<Vec<&[u8]>> = lines
+        .iter()
+        .map(|line| line.chunks(16).collect::<Vec<&[u8]>>())
+        .collect();
+
+    let mut max_idx = 0_usize;
+    let mut max_dups = 0_usize;
+
+    for (i, c) in chunked_lines.iter().enumerate() {
+        let dups = count_duplicate_vecs(c.to_vec());
+        if dups > max_dups {
+            max_dups = dups;
+            max_idx = i;
+        }
+    }
+
+    println!("IDX: {:?}\nMAX_DUPS: {:?}", max_idx, max_dups);
 }
 
 // ===================================================================================
@@ -493,9 +541,15 @@ fn main() {
         .decode(file_content_b64.replace('\n', "").replace('\r', ""))
         .unwrap();
 
-    let file_content = decrypt_aes128_ecb(&file_content_in_bytes);
+    let file_content = decrypt_aes128_ecb(b"YELLOW SUBMARINE", &file_content_in_bytes);
     println!(
         "FILE CONTENT:\n{}",
         String::from_utf8(file_content).unwrap()
     );
+
+    println!("========================================================================");
+
+    // Challange 7
+    println!("Challange 8");
+    challenge8();
 }
