@@ -428,7 +428,7 @@ fn count_duplicate_vecs(chunks: Vec<&[u8]>) -> usize {
 
 fn challenge8() {
     let file_content_b64 = std::fs::read_to_string(
-        r"/Users/belane/Projects/Current/cryptochallenge/data/set1chall8.txt",
+        r"./data/set1chall8.txt",
     )
     .unwrap();
 
@@ -494,7 +494,7 @@ fn main() {
 
     // Challange 4
     println!("Challange 4");
-    let filename = "/Users/belane/Projects/Current/cryptochallenge/data/set1chall4.txt";
+    let filename = r"./data/set1chall4.txt";
     detect_single_char_xor_cipher_from_file(filename);
     println!("========================================================================");
 
@@ -511,7 +511,7 @@ fn main() {
     // Challange 6
     println!("Challange 6");
     let file_content_b64 = std::fs::read_to_string(
-        r"/Users/belane/Projects/Current/cryptochallenge/data/set1chall6.txt",
+        r"./data/set1chall6.txt",
     )
     .unwrap();
 
@@ -533,7 +533,7 @@ fn main() {
     println!("Challange 7");
 
     let file_content_b64 = std::fs::read_to_string(
-        r"/Users/belane/Projects/Current/cryptochallenge/data/set1chall7.txt",
+        r"./data/set1chall7.txt",
     )
     .unwrap();
 
